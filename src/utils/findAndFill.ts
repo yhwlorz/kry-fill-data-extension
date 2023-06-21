@@ -7,8 +7,12 @@
 
 
 const findAndFill = (selector: string, value: string, pageSize: number) => {
+    //打印selector
+    console.log("selector:",selector);
     let elements = Array.from(document.querySelectorAll(selector)) as HTMLInputElement[];
-  
+    //elements判空
+    console.log("elements.length:",elements.length);
+
     let filled = 0;
     let index = 0;
   

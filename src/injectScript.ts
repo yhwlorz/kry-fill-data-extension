@@ -1,10 +1,14 @@
 // src/injectScript.ts
 
-import findAndFill from './utils/findAndFill';
+//import findAndFill from './utils/findAndFill';
+import fillTable from './utils/fillTable';
 
 function injectScript() {
   const scriptElement = document.createElement('script');
-  scriptElement.textContent = `(${findAndFill.toString()})();`;
+  //(${findAndFill.toString()})() 带最后的括号，就是自执行函数
+  //scriptElement.textContent = `(${findAndFill.toString()});`;
+  scriptElement.textContent = `(${fillTable.toString()});`;
+
   document.documentElement.appendChild(scriptElement);
 }
 

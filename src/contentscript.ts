@@ -1,11 +1,18 @@
 // src/contentscript.ts
 
 import { injectScript } from './injectScript';
+
 injectScript();
+
+// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+//   if (request.action === "fill") {
+//     (window as any).findAndFill(request.selector, request.value, request.pageSize);
+//   }
+// });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "fill") {
-    (window as any).findAndFill(request.selector, request.value, request.pageSize);
+    (window as any).fillTable(request.headerClass, request.headerName, request.bodyClass, request.inputValue);
   }
 });
 
