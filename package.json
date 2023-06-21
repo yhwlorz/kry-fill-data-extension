@@ -7,28 +7,31 @@
     "start": "webpack --mode development --watch",
     "build": "webpack --mode production"
   },
-  "homepage": "./",
+  "homepage": "https://www.baidu.com",
   "keywords": [
     "Chrome",
     "Extension",
     "Invoice",
-    "Filler"
+    "Filler",
+    "Chrome Extension"
   ],
   "author": "ys",
   "license": "ISC",
   "dependencies": {
     "@craco/craco": "^7.1.0",
     "@types/chrome": "^0.0.122",
-    "@types/react": "^17.0.13",
-    "@types/react-dom": "^17.0.8",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "typescript": "^4.3.2",
     "web-ext": "^6.4.0"
   },
   "devDependencies": {
+    "@types/react": "^17.0.13",
+    "@types/react-dom": "^17.0.8",
     "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^7.32.0",
+    "prettier": "^2.4.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "ts-loader": "^9.2.2",
+    "typescript": "^4.3.2",
     "webpack": "^5.87.0",
     "webpack-cli": "^4.7.0"
   }

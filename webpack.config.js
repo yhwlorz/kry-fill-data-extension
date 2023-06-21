@@ -1,33 +1,32 @@
-const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-  mode: 'production',
+  mode: "production",
   entry: {
-    contentscript: './src/contentscript.ts',
-    background: './src/background.ts',
+    contentscript: "./src/contentscript.ts",
+    background: "./src/background.ts",
+    index: './src/index.tsx'
   },
   output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: '[name].js',
+    path: path.resolve(__dirname, "build"),
+    filename: "[name].js",
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
+        test: /\.(ts|tsx)$/,
+        use: "ts-loader",
         exclude: /node_modules/,
       },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: [".tsx", ".ts", ".js"],
   },
   plugins: [
     new CopyPlugin({
-      patterns: [
-        { from: 'public', to: '.' },
-      ],
+      patterns: [{ from: "public", to: "." }],
     }),
   ],
 };
