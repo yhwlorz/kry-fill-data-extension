@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 
 const App: React.FC = () => {
-  const [headerClass, setHeaderClass] = useState('');
-  const [headerName, setHeaderName] = useState('');
-  const [bodyClass, setBodyClass] = useState('');
-  const [inputValue, setInputValue] = useState('');
+  const [headerClass, setHeaderClass] = useState('scm-ant-table-header');
+  const [headerName, setHeaderName] = useState('标准数量');
+  const [bodyClass, setBodyClass] = useState('scm-ant-table-body');
+  const [inputValue, setInputValue] = useState('100');
 
   const fillTable = () => {
     chrome.runtime.sendMessage({

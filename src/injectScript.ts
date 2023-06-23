@@ -9,7 +9,10 @@ function injectScript() {
   //scriptElement.textContent = `(${findAndFill.toString()});`;
   scriptElement.textContent = `(${fillTable.toString()});`;
 
-  document.documentElement.appendChild(scriptElement);
+   // 修改注入逻辑以支持跨域
+   const parent = document.head || document.documentElement;
+   parent.appendChild(scriptElement);
+   parent.removeChild(scriptElement);
 }
 
 export { injectScript };
