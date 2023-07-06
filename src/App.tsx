@@ -1,3 +1,4 @@
+//src/App.tsx
 import React, { useState, useEffect } from "react";
 
 type OptionType = {
@@ -26,12 +27,39 @@ const App: React.FC = () => {
   const [bodyClass, setBodyClass] = useState(options[option].bodyClass);
   const [inputValue, setInputValue] = useState("100");
 
+  //防重复执行
+  const [filling, setFilling] = useState(false);
+  //异常提示
+  const [error, setError] = useState("");
+  
   useEffect(() => {
     setHeaderClass(options[option].headerClass);
     setBodyClass(options[option].bodyClass);
   }, [option]);
 
+  //为避免组件卸载后依然保留监听器，可能导致内存泄露或错误，你应该在组件卸载时移除此监听器。这通常在React的useEffect钩子的清理函数中完成
+  useEffect(() => {
+    const messageListener = (request: any) => {
+      if (request.action === "completed" || request.action === "error") {
+        setFilling(false);
+      }
+  
+      if (request.action === "error") {
+        setError(request.message);
+      }
+    };
+  
+    chrome.runtime.onMessage.addListener(messageListener);
+  
+    // 在组件卸载时移除监听器
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    };
+  }, []);
+
   const fillTable = () => {
+    setFilling(true);
+    setError("");
     chrome.runtime.sendMessage({
       action: "fill",
       headerClass,
@@ -40,6 +68,13 @@ const App: React.FC = () => {
       inputValue,
     });
   };
+
+  const stopFill = () => {
+    chrome.runtime.sendMessage({ action: "stop" });
+  };
+
+
+
 
   return (
     <div>
@@ -75,8 +110,11 @@ const App: React.FC = () => {
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
       />
-      <button onClick={fillTable}>Fill Table</button>
-    </div>
+      <button onClick={fillTable} disabled={filling}>Fill Table</button>
+      <button onClick={stopFill} disabled={!filling}>Stop Fill</button>  
+      {error && <p>{error}</p>}
+        </div>
+      
   );
 };
 
