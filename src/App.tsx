@@ -1,5 +1,6 @@
 //src/App.tsx
 import React, { useState, useEffect } from "react";
+import './App.css';
 
 type OptionType = {
   [key: string]: {
@@ -9,11 +10,10 @@ type OptionType = {
 };
 
 const options: OptionType = {
-  其他入库: {
+  通用: {
     headerClass: "scm-ant-table-header",
     bodyClass: "scm-ant-table-body",
   },
-  其他出库: { headerClass: "c", bodyClass: "d" },
   报损出库: {
     headerClass: "cook-table-header.cook-table-sticky-holder",
     bodyClass: "cook-table-body",
@@ -112,7 +112,7 @@ const App: React.FC = () => {
       />
       <button onClick={fillTable} disabled={filling}>Fill Table</button>
       <button onClick={stopFill} disabled={!filling}>Stop Fill</button>  
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
         </div>
       
   );

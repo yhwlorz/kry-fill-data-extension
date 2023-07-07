@@ -3,7 +3,7 @@
 import { injectScript } from './injectScript';
 
 injectScript();
-
+//监听background消息，将插件点击事件转发给injectscript
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "fill") {
     (window as any).fillTable(request.headerClass, request.headerName, request.bodyClass, request.inputValue);
@@ -12,18 +12,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-window.addEventListener("fillCompleted", () => {
-  chrome.runtime.sendMessage({ action: "completed" });
-});
-
-
 //在使用TypeScript的时候，如果你要为window添加一个自定义事件，你需要扩展WindowEventMap
 declare global {
   interface WindowEventMap {
     fillError: CustomEvent; // 添加你的自定义事件
   }
 }
-//转发错误事件
+
+//监听injectscript消息，将填充完成事件转发给background
+window.addEventListener("fillCompleted", () => {
+  chrome.runtime.sendMessage({ action: "completed" });
+});
+
+
+//监听injectscript消息，将填充错误事件转发给background
 window.addEventListener("fillError", (event: CustomEvent) => {
   chrome.runtime.sendMessage({ action: "error", message: event.detail });
 });

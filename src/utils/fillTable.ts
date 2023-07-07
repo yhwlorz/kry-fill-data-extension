@@ -12,6 +12,7 @@ declare global {
   }
 }
 
+//查找表头元素位置
 const findElementWithText = (node: Node, text: string): Node | null => {
   //打印node
   console.log("findElementWithTextnode:", node);
@@ -29,6 +30,7 @@ const findElementWithText = (node: Node, text: string): Node | null => {
   return null;
 };
 
+//查找表体中可编辑元素
 const findEditableElement = (node: Node): HTMLElement | null => {
   //打印node
   console.log("findEditableElementnode:", node);
@@ -86,17 +88,50 @@ const fillTable = async (
 
     window.addEventListener("stopFill", onStop);
 
-    const header = document.querySelector(`.${headerClass}`);
-    const body = document.querySelector(`.${bodyClass}`);
+    const headers = Array.from(
+      document.querySelectorAll<HTMLElement>(`.${headerClass}`)
+    );
+    const bodies = Array.from(
+      document.querySelectorAll<HTMLElement>(`.${bodyClass}`)
+    );
+
+    //打印headers
+    console.log("headers:", headers);
+
+    let header: HTMLElement | null = null;
+    let body: HTMLElement | null = null;
+
+    // 检查元素是否真正可见 。在可见性检查函数 isVisible 中检查元素的 offsetParent 属性。如果元素是隐藏的，那么 offsetParent 将是 null。
+    const isVisible = (element: HTMLElement) => {
+      return element.offsetParent !== null;
+    };
+
+    // 找到真正可见的header和body
+    for (let i = 0; i < headers.length; i++) {
+      if (isVisible(headers[i])) {
+        //打印i+1
+        console.log("head i+1:", i + 1);
+        header = headers[i];
+        break;
+      }
+    }
+    for (let i = 0; i < bodies.length; i++) {
+      if (isVisible(bodies[i])) {
+        //打印i+1
+        console.log("body i+1:", i + 1);
+        body = bodies[i];
+        break;
+      }
+    }
 
     if (!header || !body) {
       throw new Error("Could not find table header or body");
     }
 
-    const headers = Array.from(header.querySelectorAll("th"));
-    //打印headers
-    console.log("headers:", headers);
-    const columnIndex = headers.findIndex(
+    const headerThs = Array.from(header.querySelectorAll("th"));
+    //打印headerThs
+    console.log("headerThs:", headerThs);
+    const columnIndex = headerThs.findIndex(
       (th) => findElementWithText(th, headerName) !== null
     );
     //打印columnIndex
@@ -107,6 +142,7 @@ const fillTable = async (
 
     let processedRows = new Set<Node>();
 
+    //逐行填充函数
     const processRow = async (row: Element) => {
       if (stop) {
         window.dispatchEvent(new CustomEvent("fillCompleted"));
@@ -114,19 +150,14 @@ const fillTable = async (
       }
       const cells = Array.from(row.querySelectorAll("td"));
       const cell = cells[columnIndex];
+      //打印cell
+      console.log("表体中逐行cell单元格", cell);
       if (cell) {
         const el = findEditableElement(cell);
+        //打印可输入元素el
+        console.log("可输入元素el:", el);
         if (el) {
           await simulateInput(el, inputValue);
-        }
-      }
-
-      //临时将成本单价赋值
-      const cell2 = cells[columnIndex + 5];
-      if (cell2) {
-        const el2 = findEditableElement(cell2);
-        if (el2) {
-          await simulateInput(el2, "1");
         }
       }
     };
@@ -145,14 +176,33 @@ const fillTable = async (
         }
       }
 
-      // 检查是否需要滚动加载更多数据
-      if (body.scrollTop + body.clientHeight >= body.scrollHeight) {
-        // 触发滚动事件
-        body.scrollTop = body.scrollHeight;
+      // 检查 body 是否存在，然后再访问其子元素
+      if (body) {
+        // 检查是否需要滚动加载更多数据
+        if (body.scrollTop + body.clientHeight >= body.scrollHeight) {
+          // 触发滚动事件
+          body.scrollTop = body.scrollHeight;
+        } // ...
+      } else {
+        throw new Error("Body is null");
       }
     });
 
-    const initialRows = Array.from(body.querySelectorAll("tr"));
+    //表体中所有的行 const是常量，let是变量
+    let initialRows = Array.from(body.querySelectorAll("tr"));
+    //排除initialRows中属性为hidden的行并更新initialRows数组
+    initialRows = initialRows.filter((row) => !row.hidden);
+
+    //适用于报损出库的两项排除
+    //排除initialRows中class值为cook-table-placeholder的行，除initialRows中aria-hidden属性值为true的行,并更新initialRows数组
+    initialRows = initialRows
+      .filter((row) => !row.classList.contains("cook-table-placeholder"))
+      .filter((row) => row.getAttribute("aria-hidden") !== "true");
+
+    //判断initialRows中是否有数据,没有数据则抛出异常
+    if (initialRows.length === 0) {
+      throw new Error("Could not find any rows in table body");
+    }
     for (let row of initialRows) {
       await processRow(row);
       if (stop) {
