@@ -1,5 +1,6 @@
 // src/utils/fillTable.ts
 import { simulateInput } from "./simulateInput";
+import { normalizeString } from "./stringUtils";
 
 declare global {
   interface Window {
@@ -19,11 +20,13 @@ const findElementWithText = (
 ): Node | null => {
   //打印node
   console.log("findElementWithTextnode:", node);
+  //打印normalizeString(node.textContent || "")
+  console.log("normalizeString[node.textContent ]", normalizeString(node.textContent || ""));
   if (
     node.nodeType === Node.TEXT_NODE &&
     (exactText
-      ? node.textContent?.trim() === text
-      : node.textContent?.trim().includes(text))
+      ? normalizeString(node.textContent || "") === normalizeString(text)
+      : normalizeString(node.textContent || "").includes(normalizeString(text)))
   ) {
     return node;
   }
@@ -51,7 +54,7 @@ const headerIndex = (
     return exactMatchIndex;
   } else {
     let partialMatches = headerThs.filter(
-      (th) => findElementWithText(th, headerName,false) !== null
+      (th) => findElementWithText(th, headerName, false) !== null
     );
 
     if (partialMatches.length === 1) {
