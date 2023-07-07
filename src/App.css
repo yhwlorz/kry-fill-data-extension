@@ -1,4 +1,113 @@
+/* 全局样式 */
+body {
+  font-family: 'Noto Sans SC', Arial, sans-serif;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+/* 插件容器样式 */
+.extension-container {
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+/* 标题样式 */
+.header {
+  text-align: center;
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* 表单容器样式 */
+.form-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+/* 选择器和输入框容器样式 */
+.select-container,
+.input-container {
+  width: 48%;
+}
+
+/* 输入框容器样式 */
+.input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 标签样式 */
+label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+/* 输入框样式 */
+input[type="text"] {
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+/* 字段容器样式 */
+.field-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 按钮容器样式 */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.field-button-container,
+.fill-buttons-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+/* 按钮样式 */
+.action-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* 添加字段按钮样式 */
+.add-button {
+  background-color: #639fd0;
+}
+
+/* 删除字段按钮样式 */
+.remove-button {
+  background-color: #c19f6c;
+}
+
+/* 填充表格按钮样式 */
+.fill-button {
+  background-color: #4caf50;
+}
+
+/* 停止填充按钮样式 */
+.stop-button {
+  background-color: #f44336;
+}
+
+/* 错误信息样式 */
 .error {
-    color: red;
-  }
-  
+  color: red;
+}
