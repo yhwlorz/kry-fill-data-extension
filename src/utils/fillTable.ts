@@ -160,6 +160,8 @@ const fillTable = async (
 
         if (cell) {
           const el = findEditableElement(cell);
+          //打印可编辑元素el
+          console.log("可编辑元素el:", el);
           if (el) {
             await simulateInput(el, field.inputValue);
           }
