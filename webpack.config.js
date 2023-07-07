@@ -6,7 +6,7 @@ module.exports = {
   entry: {
     contentscript: "./src/contentscript.ts",
     background: "./src/background.ts",
-    //injectScript: "./src/injectScript.ts",
+    injectScript: "./src/injectScript.ts",
     index: './src/index.tsx'
   },
   output: {
