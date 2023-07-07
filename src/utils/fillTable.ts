@@ -5,10 +5,9 @@ declare global {
   interface Window {
     fillTable: (
       headerClass: string,
-      headerName: string,
       bodyClass: string,
-      inputValue: string
-    ) => void;
+      fields: { headerName: string; inputValue: string }[]
+      ) => void;
   }
 }
 
@@ -66,9 +65,10 @@ const findEditableElement = (node: Node): HTMLElement | null => {
 
 const fillTable = async (
   headerClass: string,
-  headerName: string,
   bodyClass: string,
-  inputValue: string
+  fields: { headerName: string; inputValue: string }[]
+  //headerName: string,
+  //inputValue: string
 ) => {
   let error: any = null;
   let stop = false;
@@ -78,13 +78,7 @@ const fillTable = async (
 
   try {
     //打印fillTable函数全部入参
-    console.log(
-      "fllTable全部入参：",
-      headerClass,
-      headerName,
-      bodyClass,
-      inputValue
-    );
+    console.log("fllTable全部入参：", headerClass, bodyClass, fields);
 
     window.addEventListener("stopFill", onStop);
 
@@ -128,16 +122,27 @@ const fillTable = async (
       throw new Error("Could not find table header or body");
     }
 
+    //记录表头中指定字段的位置
+    let columnIndexMap: { [key: string]: number } = {};
+
     const headerThs = Array.from(header.querySelectorAll("th"));
-    //打印headerThs
-    console.log("headerThs:", headerThs);
-    const columnIndex = headerThs.findIndex(
-      (th) => findElementWithText(th, headerName) !== null
-    );
-    //打印columnIndex
-    console.log("columnIndex:", columnIndex);
-    if (columnIndex === -1) {
-      throw new Error(`Could not find header with name "${headerName}"`);
+
+    for (let field of fields) {
+      //如果field.headerName的值为空字符串，则继续下一次循环
+      if (!field.headerName) {
+        continue;
+      }
+      const columnIndex = headerThs.findIndex(
+        (th) => findElementWithText(th, field.headerName) !== null
+      );
+
+      if (columnIndex === -1) {
+        throw new Error(
+          `Could not find header with name "${field.headerName}"`
+        );
+      }
+
+      columnIndexMap[field.headerName] = columnIndex;
     }
 
     let processedRows = new Set<Node>();
@@ -149,15 +154,15 @@ const fillTable = async (
         return;
       }
       const cells = Array.from(row.querySelectorAll("td"));
-      const cell = cells[columnIndex];
-      //打印cell
-      console.log("表体中逐行cell单元格", cell);
-      if (cell) {
-        const el = findEditableElement(cell);
-        //打印可输入元素el
-        console.log("可输入元素el:", el);
-        if (el) {
-          await simulateInput(el, inputValue);
+
+      for (let field of fields) {
+        const cell = cells[columnIndexMap[field.headerName]];
+
+        if (cell) {
+          const el = findEditableElement(cell);
+          if (el) {
+            await simulateInput(el, field.inputValue);
+          }
         }
       }
     };

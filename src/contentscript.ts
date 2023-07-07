@@ -6,7 +6,7 @@ injectScript();
 //监听background消息，将插件点击事件转发给injectscript
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "fill") {
-    (window as any).fillTable(request.headerClass, request.headerName, request.bodyClass, request.inputValue);
+    (window as any).fillTable(request.headerClass, request.bodyClass, request.fields);
   }else if (request.action === "stop") {
     window.dispatchEvent(new CustomEvent("stopFill"));
   }

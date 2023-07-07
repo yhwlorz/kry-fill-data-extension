@@ -1,8 +1,10 @@
 // 文件名：simulateInput.ts
 
 //监听元素：divEl。点击div后，寻找divEl下的input元素，如果input元素可编辑，则在input元素中输入内容，否则等待一段时间后再次尝试
-export const simulateInput = (divEl: HTMLElement, inputValue: string) => {
+export const simulateInput = (divEl: HTMLElement, inputValue: string, maxAttempts = 3) => {
   return new Promise((resolve, reject) => {
+    //重试次数。最大重试次数maxAttempts
+    let attempts = 0;
 
     // 检查divEl元素是否本身就是一个可以输入的元素
     if (
@@ -58,8 +60,15 @@ export const simulateInput = (divEl: HTMLElement, inputValue: string) => {
               // 解析Promise
               resolve(null);
             } else {
+              // 如果达到最大尝试次数，拒绝Promise
+            if (attempts >= maxAttempts) {
+              observer.disconnect();
+              reject(new Error('Element is not editable'));
+            } else {
               // 如果input元素不可编辑，等待一段时间后再次尝试
-              setTimeout(() => observer.takeRecords(), 300);
+              attempts += 1;
+              setTimeout(() => observer.takeRecords(), 200);
+            }
             }
           }
         }

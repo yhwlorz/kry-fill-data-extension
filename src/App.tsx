@@ -21,17 +21,50 @@ const options: OptionType = {
 };
 
 const App: React.FC = () => {
-  const [option, setOption] = useState("报损出库");
+  const [option, setOption] = useState("通用");
   const [headerClass, setHeaderClass] = useState(options[option].headerClass);
-  const [headerName, setHeaderName] = useState("标准数量");
   const [bodyClass, setBodyClass] = useState(options[option].bodyClass);
+  const [headerName, setHeaderName] = useState("标准数量");
   const [inputValue, setInputValue] = useState("100");
+
+
+  //支持用户手动添加更多组合
+  const [fields, setFields] = useState([{ headerName: "标准数量", inputValue: "100" }]);
+  const addField = () => {
+    setFields([...fields, { headerName: '', inputValue: '' }]);
+  };
+  //如果fields.length>1,按钮removeField的disabled属性为false
+  const[removeFieldDisabled, setRemoveFieldDisabled] = useState(true);
+  useEffect(() => {
+    if (fields.length > 1) {
+      setRemoveFieldDisabled(false);
+    } else {
+      setRemoveFieldDisabled(true);
+    }
+  }
+  , [fields]);
+  
+  //从最后一个元素开始减少Field,最少保留一个元素
+  const removeField = () => {
+    if (fields.length > 1) {
+      const newFields = [...fields];
+      newFields.pop();
+      setFields(newFields);
+    }
+  };
+
+  const updateField = (index: number, headerName: string, inputValue: string) => {
+    const newFields = [...fields];
+    newFields[index] = { headerName, inputValue };
+    setFields(newFields);
+  };
 
   //防重复执行
   const [filling, setFilling] = useState(false);
   //异常提示
   const [error, setError] = useState("");
-  
+
+
   useEffect(() => {
     setHeaderClass(options[option].headerClass);
     setBodyClass(options[option].bodyClass);
@@ -63,17 +96,16 @@ const App: React.FC = () => {
     chrome.runtime.sendMessage({
       action: "fill",
       headerClass,
-      headerName,
       bodyClass,
-      inputValue,
+      fields
+      //headerName,
+      //inputValue,
     });
   };
 
   const stopFill = () => {
     chrome.runtime.sendMessage({ action: "stop" });
   };
-
-
 
 
   return (
@@ -94,24 +126,44 @@ const App: React.FC = () => {
       />
       <input
         type="text"
-        placeholder="Header Name"
-        value={headerName}
-        onChange={(e) => setHeaderName(e.target.value)}
-      />
-      <input
-        type="text"
         placeholder="Body Class"
         value={bodyClass}
         onChange={(e) => setBodyClass(e.target.value)}
       />
+      {/* <input
+        type="text"
+        placeholder="Header Name"
+        value={headerName}
+        onChange={(e) => setHeaderName(e.target.value)}
+      />
+      
       <input
         type="text"
         placeholder="Input Value"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-      />
+      /> */}
+      {fields.map((field, index) => (
+        <div key={index}>
+          <input
+            type="text"
+            placeholder="Header Name"
+            value={field.headerName}
+            onChange={(e) => updateField(index, e.target.value, field.inputValue)}
+          />
+          <input
+            type="text"
+            placeholder="Input Value"
+            value={field.inputValue}
+            onChange={(e) => updateField(index, field.headerName, e.target.value)}
+          />
+        </div>
+      ))}
+      <button onClick={addField}>Add Field</button>
+      <button onClick={removeField} disabled={removeFieldDisabled} >Sub Field</button>
+      <br />
       <button onClick={fillTable} disabled={filling}>Fill Table</button>
-      <button onClick={stopFill} disabled={!filling}>Stop Fill</button>  
+      <button onClick={stopFill} disabled={!filling}> Stop Fill</button>  
       {error && <p className="error">{error}</p>}
         </div>
       
