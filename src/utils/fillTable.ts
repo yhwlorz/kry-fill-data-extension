@@ -21,7 +21,10 @@ const findElementWithText = (
   //打印node
   console.log("findElementWithTextnode:", node);
   //打印normalizeString(node.textContent || "")
-  console.log("normalizeString[node.textContent ]", normalizeString(node.textContent || ""));
+  console.log(
+    "normalizeString[node.textContent ]",
+    normalizeString(node.textContent || "")
+  );
   if (
     node.nodeType === Node.TEXT_NODE &&
     (exactText
@@ -106,6 +109,8 @@ const findEditableElement = (node: Node): HTMLElement | null => {
   return deepestElement;
 };
 
+
+
 const fillTable = async (
   headerClass: string,
   bodyClass: string,
@@ -113,6 +118,9 @@ const fillTable = async (
   //headerName: string,
   //inputValue: string
 ) => {
+  //打印fillTable函数全部入参
+  console.log("fllTable全部入参：", headerClass, bodyClass, fields);
+
   let error: any = null;
   let stop = false;
   const onStop = () => {
@@ -120,9 +128,6 @@ const fillTable = async (
   };
 
   try {
-    //打印fillTable函数全部入参
-    console.log("fllTable全部入参：", headerClass, bodyClass, fields);
-
     window.addEventListener("stopFill", onStop);
 
     const headers = Array.from(
@@ -138,12 +143,11 @@ const fillTable = async (
     let header: HTMLElement | null = null;
     let body: HTMLElement | null = null;
 
-    // 检查元素是否真正可见 。在可见性检查函数 isVisible 中检查元素的 offsetParent 属性。如果元素是隐藏的，那么 offsetParent 将是 null。
+    // 找到真正可见的header和body
     const isVisible = (element: HTMLElement) => {
+      // 检查元素是否真正可见 。在可见性检查函数 isVisible 中检查元素的 offsetParent 属性。如果元素是隐藏的，那么 offsetParent 将是 null。
       return element.offsetParent !== null;
     };
-
-    // 找到真正可见的header和body
     for (let i = 0; i < headers.length; i++) {
       if (isVisible(headers[i])) {
         //打印i+1
@@ -177,16 +181,6 @@ const fillTable = async (
       }
       const columnIndex = headerIndex(headerThs, field.headerName);
 
-      //  = headerThs.findIndex(
-      //   (th) => findElementWithText(th, field.headerName) !== null
-      // );
-
-      // if (columnIndex === -1) {
-      //   throw new Error(
-      //     `Could not find header with name "${field.headerName}"`
-      //   );
-      // }
-
       columnIndexMap[field.headerName] = columnIndex;
     }
 
@@ -200,6 +194,14 @@ const fillTable = async (
       }
       const cells = Array.from(row.querySelectorAll("td"));
 
+      //打印第一个字段的名字
+      console.log(
+        "行：cell[0,1,2]",
+        cells[0].textContent,
+        cells[1].textContent,
+        cells[2].textContent,
+        cells[3].textContent
+      );
       for (let field of fields) {
         const cell = cells[columnIndexMap[field.headerName]];
 
@@ -214,11 +216,41 @@ const fillTable = async (
       }
     };
 
+    //处理表体中的行表体中所有的行 ( const是常量，let是变量 )
+    let initialRows = Array.from(body.querySelectorAll("tr"));
+    //排除initialRows中属性为hidden的行并更新initialRows数组
+    initialRows = initialRows.filter((row) => !row.hidden);
+    //适用于报损出库的两项排除
+    //排除initialRows中class值为cook-table-placeholder的行，除initialRows中aria-hidden属性值为true的行,并更新initialRows数组
+    initialRows = initialRows
+      .filter((row) => !row.classList.contains("cook-table-placeholder"))
+      .filter((row) => row.getAttribute("aria-hidden") !== "true");
+
+    //判断initialRows中是否有数据,没有数据则抛出异常
+    if (initialRows.length === 0) {
+      throw new Error("Could not find any rows in table body");
+    }
+
+    //打印row行数
+    console.log("打印row行数", initialRows.length);
+
+    for (let row of initialRows) {
+      await processRow(row);
+      if (stop) {
+        window.dispatchEvent(new CustomEvent("fillCompleted"));
+        break;
+      }
+      processedRows.add(row);
+    }
+
     const observer = new MutationObserver(async (mutationsList) => {
+      console.log("执行了observer,打印mutationsList", mutationsList);
       for (let mutation of mutationsList) {
         if (mutation.type === "childList") {
           const addedNodes = Array.from(mutation.addedNodes);
           const newRows = addedNodes.filter((node) => !processedRows.has(node));
+          //打印newRows
+          console.log("newRows:", newRows);
           for (let row of newRows) {
             if (row instanceof Element) {
               await processRow(row);
@@ -240,29 +272,9 @@ const fillTable = async (
       }
     });
 
-    //表体中所有的行 const是常量，let是变量
-    let initialRows = Array.from(body.querySelectorAll("tr"));
-    //排除initialRows中属性为hidden的行并更新initialRows数组
-    initialRows = initialRows.filter((row) => !row.hidden);
+    
 
-    //适用于报损出库的两项排除
-    //排除initialRows中class值为cook-table-placeholder的行，除initialRows中aria-hidden属性值为true的行,并更新initialRows数组
-    initialRows = initialRows
-      .filter((row) => !row.classList.contains("cook-table-placeholder"))
-      .filter((row) => row.getAttribute("aria-hidden") !== "true");
-
-    //判断initialRows中是否有数据,没有数据则抛出异常
-    if (initialRows.length === 0) {
-      throw new Error("Could not find any rows in table body");
-    }
-    for (let row of initialRows) {
-      await processRow(row);
-      if (stop) {
-        window.dispatchEvent(new CustomEvent("fillCompleted"));
-        break;
-      }
-      processedRows.add(row);
-    }
+    
 
     observer.observe(body, { childList: true });
   } catch (e) {

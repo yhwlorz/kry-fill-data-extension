@@ -12,6 +12,7 @@ export const simulateInput = (
         inputEl.focus();// 将焦点设置到div
         inputEl.value = inputValue;
         const event = new Event("input", { bubbles: true });// 创建并触发input事件
+        console.log("已填充数据")
         inputEl.dispatchEvent(event);
         inputEl.blur();// 移除元素焦点
         return true;
