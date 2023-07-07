@@ -1,105 +1,111 @@
-//src/App.tsx
-import React, { useState, useEffect } from "react";
-import './App.css';
+import React, { useReducer, useEffect, Dispatch } from "react";
+import "./App.css";
 
-type OptionType = {
-  [key: string]: {
-    headerClass: string;
-    bodyClass: string;
-  };
-};
+interface Field {
+  thName: string;
+  tdValue: string;
+}
 
-const options: OptionType = {
+interface Option {
+  theadClass: string;
+  tbodyClass: string;
+}
+
+interface Options {
+  [key: string]: Option;
+}
+
+const INITIAL_OPTIONS: Options = {
   通用: {
-    headerClass: "scm-ant-table-header",
-    bodyClass: "scm-ant-table-body",
+    theadClass: "scm-ant-table-thead",
+    tbodyClass: "scm-ant-table-tbody",
   },
   报损出库: {
-    headerClass: "cook-table-header.cook-table-sticky-holder",
-    bodyClass: "cook-table-body",
+    theadClass: "cook-table-thead",
+    tbodyClass: "cook-table-tbody",
   },
+};
+
+const INITIAL_FIELDS: Field[] = [{ thName: "标准数量", tdValue: "100" }];
+
+interface State {
+  selectedOption: string;
+  fields: Field[];
+  filling: boolean;
+  error: string;
+}
+
+const initialState: State = {
+  selectedOption: Object.keys(INITIAL_OPTIONS)[0],
+  fields: INITIAL_FIELDS,
+  filling: false,
+  error: "",
+};
+
+type Action =
+  | { type: "SET_OPTION"; payload: string }
+  | { type: "ADD_FIELD" }
+  | { type: "REMOVE_FIELD" }
+  | { type: "UPDATE_FIELD"; payload: { index: number; field: Field } }
+  | { type: "SET_FILLING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string };
+
+const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "SET_OPTION":
+      return { ...state, selectedOption: action.payload };
+    case "ADD_FIELD":
+      return {
+        ...state,
+        fields: [...state.fields, { thName: "", tdValue: "" }],
+      };
+    case "REMOVE_FIELD":
+      return { ...state, fields: state.fields.slice(0, -1) };
+    case "UPDATE_FIELD":
+      return {
+        ...state,
+        fields: state.fields.map((field, i) =>
+          i === action.payload.index ? action.payload.field : field
+        ),
+      };
+    case "SET_FILLING":
+      return { ...state, filling: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    default:
+      return state;
+  }
 };
 
 const App: React.FC = () => {
-  const [option, setOption] = useState("通用");
-  const [headerClass, setHeaderClass] = useState(options[option].headerClass);
-  const [bodyClass, setBodyClass] = useState(options[option].bodyClass);
-  const [headerName, setHeaderName] = useState("标准数量");
-  const [inputValue, setInputValue] = useState("100");
-
-
-  //支持用户手动添加更多组合
-  const [fields, setFields] = useState([{ headerName: "标准数量", inputValue: "100" }]);
-  const addField = () => {
-    setFields([...fields, { headerName: '', inputValue: '' }]);
-  };
-  //如果fields.length>1,按钮removeField的disabled属性为false
-  const[removeFieldDisabled, setRemoveFieldDisabled] = useState(true);
-  useEffect(() => {
-    if (fields.length > 1) {
-      setRemoveFieldDisabled(false);
-    } else {
-      setRemoveFieldDisabled(true);
-    }
-  }
-  , [fields]);
-  
-  //从最后一个元素开始减少Field,最少保留一个元素
-  const removeField = () => {
-    if (fields.length > 1) {
-      const newFields = [...fields];
-      newFields.pop();
-      setFields(newFields);
-    }
-  };
-
-  const updateField = (index: number, headerName: string, inputValue: string) => {
-    const newFields = [...fields];
-    newFields[index] = { headerName, inputValue };
-    setFields(newFields);
-  };
-
-  //防重复执行
-  const [filling, setFilling] = useState(false);
-  //异常提示
-  const [error, setError] = useState("");
-
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const option = INITIAL_OPTIONS[state.selectedOption];
 
   useEffect(() => {
-    setHeaderClass(options[option].headerClass);
-    setBodyClass(options[option].bodyClass);
-  }, [option]);
-
-  //为避免组件卸载后依然保留监听器，可能导致内存泄露或错误，你应该在组件卸载时移除此监听器。这通常在React的useEffect钩子的清理函数中完成
-  useEffect(() => {
-    const messageListener = (request: any) => {
-      if (request.action === "completed" || request.action === "error") {
-        setFilling(false);
+    const messageListener = (request: { action: string; message: string }) => {
+      if (["completed", "error"].includes(request.action)) {
+        dispatch({ type: "SET_FILLING", payload: false });
       }
-  
       if (request.action === "error") {
-        setError(request.message);
+        dispatch({ type: "SET_ERROR", payload: request.message });
       }
     };
-  
+
     chrome.runtime.onMessage.addListener(messageListener);
-  
-    // 在组件卸载时移除监听器
+
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
     };
   }, []);
 
   const fillTable = () => {
-    setFilling(true);
-    setError("");
+    dispatch({ type: "SET_FILLING", payload: true });
+    dispatch({ type: "SET_ERROR", payload: "" });
+
     chrome.runtime.sendMessage({
       action: "fill",
-      headerClass,
-      bodyClass,
-      fields
-      //headerName,
-      //inputValue,
+      ...option,
+      fields: state.fields,
     });
   };
 
@@ -107,12 +113,16 @@ const App: React.FC = () => {
     chrome.runtime.sendMessage({ action: "stop" });
   };
 
-
   return (
     <div>
       <h1>Table Filler</h1>
-      <select value={option} onChange={(e) => setOption(e.target.value)}>
-        {Object.keys(options).map((option) => (
+      <select
+        value={state.selectedOption}
+        onChange={(e) =>
+          dispatch({ type: "SET_OPTION", payload: e.target.value })
+        }
+      >
+        {Object.keys(INITIAL_OPTIONS).map((option) => (
           <option key={option} value={option}>
             {option}
           </option>
@@ -120,53 +130,61 @@ const App: React.FC = () => {
       </select>
       <input
         type="text"
-        placeholder="Header Class"
-        value={headerClass}
-        onChange={(e) => setHeaderClass(e.target.value)}
+        placeholder="thead class"
+        value={option.theadClass}
+        readOnly
       />
       <input
         type="text"
-        placeholder="Body Class"
-        value={bodyClass}
-        onChange={(e) => setBodyClass(e.target.value)}
+        placeholder="tbody class"
+        value={option.tbodyClass}
+        readOnly
       />
-      {/* <input
-        type="text"
-        placeholder="Header Name"
-        value={headerName}
-        onChange={(e) => setHeaderName(e.target.value)}
-      />
-      
-      <input
-        type="text"
-        placeholder="Input Value"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-      /> */}
-      {fields.map((field, index) => (
+      {state.fields.map((field, index) => (
         <div key={index}>
           <input
             type="text"
-            placeholder="Header Name"
-            value={field.headerName}
-            onChange={(e) => updateField(index, e.target.value, field.inputValue)}
+            placeholder="th name"
+            value={field.thName}
+            onChange={(e) =>
+              dispatch({
+                type: "UPDATE_FIELD",
+                payload: { index, field: { ...field, thName: e.target.value } },
+              })
+            }
           />
           <input
             type="text"
-            placeholder="Input Value"
-            value={field.inputValue}
-            onChange={(e) => updateField(index, field.headerName, e.target.value)}
+            placeholder="td value"
+            value={field.tdValue}
+            onChange={(e) =>
+              dispatch({
+                type: "UPDATE_FIELD",
+                payload: {
+                  index,
+                  field: { ...field, tdValue: e.target.value },
+                },
+              })
+            }
           />
         </div>
       ))}
-      <button onClick={addField}>Add Field</button>
-      <button onClick={removeField} disabled={removeFieldDisabled} >Sub Field</button>
+      <button onClick={() => dispatch({ type: "ADD_FIELD" })}>Add Field</button>
+      <button
+        onClick={() => dispatch({ type: "REMOVE_FIELD" })}
+        disabled={state.fields.length <= 1}
+      >
+        Sub Field
+      </button>
       <br />
-      <button onClick={fillTable} disabled={filling}>Fill Table</button>
-      <button onClick={stopFill} disabled={!filling}> Stop Fill</button>  
-      {error && <p className="error">{error}</p>}
-        </div>
-      
+      <button onClick={fillTable} disabled={state.filling}>
+        Fill Table
+      </button>
+      <button onClick={stopFill} disabled={!state.filling}>
+        Stop Fill
+      </button>
+      {state.error && <p className="error">{state.error}</p>}
+    </div>
   );
 };
 
