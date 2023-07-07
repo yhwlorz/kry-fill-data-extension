@@ -7,26 +7,66 @@ declare global {
       headerClass: string,
       bodyClass: string,
       fields: { headerName: string; inputValue: string }[]
-      ) => void;
+    ) => void;
   }
 }
 
 //查找表头元素位置
-const findElementWithText = (node: Node, text: string): Node | null => {
+const findElementWithText = (
+  node: Node,
+  text: string,
+  exactText: boolean
+): Node | null => {
   //打印node
   console.log("findElementWithTextnode:", node);
-  if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim() === text) {
+  if (
+    node.nodeType === Node.TEXT_NODE &&
+    (exactText
+      ? node.textContent?.trim() === text
+      : node.textContent?.trim().includes(text))
+  ) {
     return node;
   }
 
   for (let i = 0; i < node.childNodes.length; i++) {
-    const found = findElementWithText(node.childNodes[i], text);
+    const found = findElementWithText(node.childNodes[i], text, exactText);
     if (found) {
       return found;
     }
   }
 
   return null;
+};
+
+const headerIndex = (
+  headerThs: HTMLTableCellElement[],
+  headerName: string
+): number => {
+  let exactMatchIndex = headerThs.findIndex(
+    (th) => findElementWithText(th, headerName, true) !== null
+  );
+
+  if (exactMatchIndex !== -1) {
+    // 找到了精确匹配的表头
+    return exactMatchIndex;
+  } else {
+    let partialMatches = headerThs.filter(
+      (th) => findElementWithText(th, headerName,false) !== null
+    );
+
+    if (partialMatches.length === 1) {
+      // 只有一个部分匹配的表头
+      return headerThs.indexOf(partialMatches[0]);
+    } else if (partialMatches.length > 1) {
+      // 有多个部分匹配的表头
+      throw new Error(
+        `Multiple headers include name "${headerName}", please refine your input.`
+      );
+    } else {
+      // 没有找到匹配的表头
+      throw new Error(`Could not find header with name "${headerName}"`);
+    }
+  }
 };
 
 //查找表体中可编辑元素
@@ -132,15 +172,17 @@ const fillTable = async (
       if (!field.headerName) {
         continue;
       }
-      const columnIndex = headerThs.findIndex(
-        (th) => findElementWithText(th, field.headerName) !== null
-      );
+      const columnIndex = headerIndex(headerThs, field.headerName);
 
-      if (columnIndex === -1) {
-        throw new Error(
-          `Could not find header with name "${field.headerName}"`
-        );
-      }
+      //  = headerThs.findIndex(
+      //   (th) => findElementWithText(th, field.headerName) !== null
+      // );
+
+      // if (columnIndex === -1) {
+      //   throw new Error(
+      //     `Could not find header with name "${field.headerName}"`
+      //   );
+      // }
 
       columnIndexMap[field.headerName] = columnIndex;
     }
