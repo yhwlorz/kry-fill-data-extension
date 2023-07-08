@@ -26,7 +26,7 @@ const INITIAL_OPTIONS: Options = {
   },
 };
 
-const INITIAL_FIELDS: Field[] = [{ thName: "标准数量", tdValue: "100" }];
+const INITIAL_FIELDS: Field[] = [{ thName: "标准数量", tdValue: "999" }];
 
 interface State {
   selectedOption: string;

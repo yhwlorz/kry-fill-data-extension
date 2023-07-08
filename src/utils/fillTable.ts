@@ -87,13 +87,22 @@ const fillTable = async (
       for (let mutation of mutationsList) {
         if (mutation.type === "childList") {
           const addedNodes = Array.from(mutation.addedNodes);
+          //打印addedNodes
+          console.log("tbody变化后，所有的row", addedNodes.length, addedNodes);
           const newTrRowEls = addedNodes.filter(
             (node) => !processedRows.has(node)
           );
           //打印newRows
-          console.log("newRows:", newTrRowEls);
+          console.log("过滤后的newRows:", newTrRowEls.length, newTrRowEls);
           for (let newTrRowEl of newTrRowEls) {
-            if (newTrRowEl instanceof Element) {
+            //打印newRow对象类型
+            console.log(
+              "newrow类型",
+              newTrRowEl.constructor.name,
+              newTrRowEl instanceof HTMLTableRowElement,
+              Object.getPrototypeOf(newTrRowEl) ===HTMLTableRowElement.prototype
+            ); // 输出：HTMLTableRowElement
+            if (newTrRowEl instanceof HTMLTableRowElement) {
               await processTrRowEl(newTrRowEl, fields, thElsIndexMap);
               processedRows.add(newTrRowEl);
             }

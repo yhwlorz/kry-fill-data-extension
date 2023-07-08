@@ -130,6 +130,9 @@ export const processTrRowEl = async (
   thElsIndexMap: { [key: string]: number }
 ) => {
   const tdCellEls = Array.from(trRowEl.querySelectorAll("td"));
+  //打印前3个tdCellEl
+  console.log('前3个tdCellEl',tdCellEls[0].textContent,tdCellEls[1].textContent,tdCellEls[2].textContent)
+  
   for (let field of fields) {
     const tdCellEl = tdCellEls[thElsIndexMap[field.thName]];
 

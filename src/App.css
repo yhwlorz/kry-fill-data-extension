@@ -87,6 +87,12 @@ input[type="text"] {
   cursor: pointer;
 }
 
+button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+}
+
 /* 添加字段按钮样式 */
 .add-button {
   background-color: #639fd0;
