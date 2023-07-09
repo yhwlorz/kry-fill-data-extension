@@ -80,9 +80,11 @@ const App: React.FC = () => {
     };
 
     chrome.runtime.onMessage.addListener(messageListener);
+    //chrome.runtime.onMessage.addListener(messageListener);
 
     // 在组件卸载时移除监听器
     return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
       chrome.runtime.onMessage.removeListener(messageListener);
     };
   }, []);

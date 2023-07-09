@@ -2,6 +2,7 @@
 
 import fillTable from './utils/fillTable';
 
+
 function injectScript() {
   const scriptElement = document.createElement('script');
   //(${findAndFill.toString()})() 带最后的括号，就是自执行函数

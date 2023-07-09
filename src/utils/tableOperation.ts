@@ -144,11 +144,3 @@ export const processTrRowEl = async (
     }
   }
 };
-
-// 填充表格的输入函数
-export const fillInput = async (
-  el: HTMLElement,
-  inputValue: string
-): Promise<void> => {
-  await simulateInput(el, inputValue);
-};

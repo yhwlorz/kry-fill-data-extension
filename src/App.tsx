@@ -91,11 +91,12 @@ const App: React.FC = () => {
         dispatch({ type: "SET_ERROR", payload: request.message });
       }
     };
-
     chrome.runtime.onMessage.addListener(messageListener);
+    //chrome.runtime.onMessage.addListener(messageListener);
 
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
+      //chrome.runtime.onMessage.removeListener(messageListener);
     };
   }, []);
 
