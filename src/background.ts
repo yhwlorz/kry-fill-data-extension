@@ -1,36 +1,65 @@
+
+
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log("The extension is installed");
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  //打印request
   console.log("background接收到request：",request);
   if (request.action === "fill" || request.action === "stop") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      console.log("tabs打印： ", tabs);
-      if (tabs[0] && tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, request, (response) => {
-          sendResponse(response);
-        });
-      }
+    chrome.tabs.query({},(tabs) => {
+      console.log("所有标签页信息：", tabs);
     });
+
+    if (request.tabId) {
+      chrome.tabs.sendMessage(request.tabId, request, (response) => {
+        sendResponse(response);
+      });
+    }
   } else if (request.action === "completed" || request.action === "error") {
-    // 当收到 "completed" 或 "error" 消息时，转发给 app (popup)
     chrome.runtime.sendMessage(request);
   }
-  return true; // 返回true，表明异步响应将会被发送
+  return true;
 });
+
+//app.tsx中直接传递标签页id，取代从background中查询活跃标签页
+// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+//   //打印request
+//   console.log("background接收到request：",request);
+//   if (request.action === "fill" || request.action === "stop") {
+//     chrome.tabs.query({}, (tabs) => {
+//       console.log("所有标签页信息：", tabs);
+//     });
+//     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//       console.log("活跃tab打印： ", tabs);
+//       if (tabs[0] && tabs[0].id) {
+//         chrome.tabs.sendMessage(tabs[0].id, request, (response) => {
+//           sendResponse(response);
+//         });
+//       }
+//     });
+//   } else if (request.action === "completed" || request.action === "error") {
+//     // 当收到 "completed" 或 "error" 消息时，转发给 app (popup)
+//     chrome.runtime.sendMessage(request);
+//   }
+//   return true; // 返回true，表明异步响应将会被发送
+// });
 
 //Manifest V3跨域填充脚本
 chrome.webRequest.onCompleted.addListener(
   (details) => {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId, frameIds: [details.frameId] },
-      files: ["injectScript.js"],
-    });
+    //if (details.url.includes("keruyun")) {
+      console.log("details", details);
+      chrome.scripting.executeScript({
+        target: { tabId: details.tabId, frameIds: [details.frameId] },
+        files: ["injectScript.js"],
+      });
+    //}
   },
   { urls: ["<all_urls>"], types: ["main_frame", "sub_frame"] }
 );
+
 
 export {};
 

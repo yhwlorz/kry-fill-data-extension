@@ -3,6 +3,8 @@
 //监听background消息，将插件点击事件转发给injectscript
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "fill") {
+    //在contentscript中打印request
+    console.log("contentscript中打印request:",request);
     //关于 (window as any).fillTable(...) 这部分，如果你在其他地方定义了 fillTable，并确保它被正确地添加到 window 对象上，那么你就可以直接在 TypeScript 中调用 window.fillTable(...)。如果没有定义 fillTable，这可能会导致运行时错误。如果 fillTable 函数是在 injectScript.js 中定义的，你需要确保 injectScript.js 脚本在你的 content script 之前执行。否则，当你的 content script 试图访问 window.fillTable 时，可能会找不到这个函数。
     (window as any).fillTable(
       request.theadClass,

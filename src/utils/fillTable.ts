@@ -32,16 +32,26 @@ const fillTable = async (
   try {
     window.addEventListener("stopFill", onStop);
 
-    const theadEls = Array.from(
-      document.querySelectorAll<HTMLElement>(`.${theadClass}`)
-    );
-    const tbodyEls = Array.from(
-      document.querySelectorAll<HTMLElement>(`.${tbodyClass}`)
-    );
+    let theadEls;
+    let tbodyEls;
+    
+    if (theadClass !== '') {
+      theadEls = Array.from(document.querySelectorAll<HTMLElement>(`.${theadClass}`));
+    } else {
+      theadEls = Array.from(document.getElementsByTagName('thead'));
+    }
+    
+    if (tbodyClass !== '') {
+      tbodyEls = Array.from(document.querySelectorAll<HTMLElement>(`.${tbodyClass}`));
+    } else {
+      tbodyEls = Array.from(document.getElementsByTagName('tbody'));
+    }
+    
 
     //打印theadEls
     console.log("theadEls:", theadEls);
 
+    //TODO 不止一个可用元素
     const theadEl = findVisibleElement(theadEls);
     const tbodyEl = findVisibleElement(tbodyEls);
 
