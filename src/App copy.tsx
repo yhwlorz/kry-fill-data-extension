@@ -128,19 +128,6 @@ const App: React.FC = () => {
         value={tbodyClass}
         onChange={(e) => setTbodyClass(e.target.value)}
       />
-      {/* <input
-        type="text"
-        placeholder="Header Name"
-        value={headerName}
-        onChange={(e) => setHeaderName(e.target.value)}
-      />
-      
-      <input
-        type="text"
-        placeholder="Input Value"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-      /> */}
       {fields.map((field, index) => (
         <div key={index}>
           <input

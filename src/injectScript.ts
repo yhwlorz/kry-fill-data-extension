@@ -1,20 +1,33 @@
-// src/injectScript.ts
-
 import fillTable from './utils/fillTable';
 
+console.log('🚀 Injected into:', window.location.href);
+console.log('🚀 Is top frame?', window.self === window.top);
 
+//测试发现，在background中使用chrome.scripting.executeScript注入文件后。此函数会被自动执行。但函数将以 "isolated world" 的形式执行脚本。这意味着这段脚本将在与页面主要 JavaScript 上下文隔离的环境中运行。这也就解释了为什么你在 Elements 面板中看不到插入的 <script> 标签：它实际上并没有作为一个 DOM 元素被插入到页面中。
 function injectScript() {
-  const scriptElement = document.createElement('script');
-  //(${findAndFill.toString()})() 带最后的括号，就是自执行函数
-  scriptElement.textContent = `(${fillTable.toString()});`;
+  // 检查是否已存在具有相同特征的脚本元素
+  const existingScript = document.querySelector('script[data-injected-script="true"]');
+  if (existingScript) {
+    console.log('🚀🚀Script already injected:', existingScript);
+    return; // 如果已存在脚本元素，则不再插入新的脚本
+  }
 
-   // 修改注入逻辑以支持跨域
-   const parent = document.head || document.documentElement;
-   parent.appendChild(scriptElement);
-   parent.removeChild(scriptElement);
+  const scriptElement = document.createElement('script');
+  scriptElement.setAttribute('data-injected-script', 'true');
+  scriptElement.textContent = `(${fillTable.toString()})();`;
+
+  const parent = document.head || document.documentElement;
+  parent.appendChild(scriptElement);
+
+  console.log('🚀🚀Script injected:', scriptElement);
 }
 
-export { injectScript };
+//injectScript(); // 注意这一行，它调用了你定义的 injectScript 函数。加上这一行，能在目标网页的Elements中看到插入的script
+
+//export { injectScript };
+
+
+
 
 
 //首先，需要明确的是，注入脚本（injected script）是指在页面上下文中执行的脚本，它可以直接访问页面的 DOM，但是不能访问插件的其他脚本。要在页面上下文中执行脚本，我们可以创建一个脚本元素，并将其插入到页面的 DOM 中。以下是injectScript.ts的基础实现：

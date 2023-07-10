@@ -1,14 +1,10 @@
-import fillTable from './utils/fillTable';
-
-
-
-export {};
-
 chrome.runtime.onInstalled.addListener(() => {
   console.log("The extension is installed");
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  //打印request
+  console.log("background接收到request：",request);
   if (request.action === "fill" || request.action === "stop") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       console.log("tabs打印： ", tabs);
@@ -22,17 +18,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // 当收到 "completed" 或 "error" 消息时，转发给 app (popup)
     chrome.runtime.sendMessage(request);
   }
-  return true;  // 返回true，表明异步响应将会被发送
-});
-
-chrome.browserAction.onClicked.addListener((tab) => {
-  console.log("The extension icon is clicked");
-  if (tab.id !== undefined) {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["injectScript.js"],
-    });
-  }
+  return true; // 返回true，表明异步响应将会被发送
 });
 
 //Manifest V3跨域填充脚本
@@ -40,13 +26,13 @@ chrome.webRequest.onCompleted.addListener(
   (details) => {
     chrome.scripting.executeScript({
       target: { tabId: details.tabId, frameIds: [details.frameId] },
-      files: ['injectScript.js'],
+      files: ["injectScript.js"],
     });
   },
-  { urls: ['<all_urls>'], types: ['main_frame', 'sub_frame'] }
+  { urls: ["<all_urls>"], types: ["main_frame", "sub_frame"] }
 );
 
-
+export {};
 
 // // 监听来自content script的消息
 // chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -87,5 +73,3 @@ chrome.webRequest.onCompleted.addListener(
 //   { urls: ["<all_urls>"] },
 //   { blocking: true }
 // );
-
-//Chrome的插件架构使得content script（注入到web页面的脚本）不能直接与popup（插件弹出窗口）通信。他们都可以与background script（插件后台页面）通信，但是他们之间不能直接交流。这意味着你必须通过background script来实现content script和popup之间的通信。

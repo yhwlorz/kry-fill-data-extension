@@ -5,9 +5,7 @@
   "version": "1.5",
   "permissions": [
     "webRequest",
-    "webRequestBlocking",
     "scripting",
-    "<all_urls>",
     "activeTab"
   ],
   "host_permissions": ["<all_urls>"],
