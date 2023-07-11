@@ -147,7 +147,11 @@ const App: React.FC = () => {
   };
 
   const stopFill = () => {
+    chrome.runtime.sendMessage({ action: "stopIt", tabId });
     chrome.runtime.sendMessage({ action: "stop", tabId });
+    chrome.runtime.sendMessage({ action: "stopxx", tabId });
+
+
   };
 
   return (

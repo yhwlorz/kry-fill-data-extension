@@ -74,7 +74,9 @@ chrome.runtime.onInstalled.addListener(() => {
 //Manifest V3跨域填充脚本
 chrome.webRequest.onCompleted.addListener(
   (details) => {
-    if (details.url.includes("keruyun")) {
+    console.log("background_iframe_detail:",details.tabId,details.frameId,details.url);
+
+    //if (details.url.includes("keruyun")) {
       //页面的tabId被设置为-1，以表示它们并不是一个真正的浏览器标签
       if (details.tabId != -1) {
         //插入脚本
@@ -85,7 +87,7 @@ chrome.webRequest.onCompleted.addListener(
         //记录tabId_iframeId,填充状态置为idle
         setIframeFillingStatus(details.tabId, details.frameId, "idle", "idle");
       }
-    }
+    //}
   },
   { urls: ["<all_urls>"], types: ["main_frame", "sub_frame"] }
 );
@@ -106,7 +108,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.log("fillResp:", response);
       sendResponse(response);
     });
-  } else if (request.action === "stop") {
+  } else if (request.action === "stopIt") {
     chrome.tabs.sendMessage(request.tabId, request, (response) => {
       console.log("stopResp:", response);
       sendResponse(response);

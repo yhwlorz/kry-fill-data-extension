@@ -13,7 +13,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sender.frameId
     );
   } else if (request.action === "stop") {
-    window.dispatchEvent(new CustomEvent("stopFill"));
+    //(window as any).fillStop(sender.frameId); 新增一个fillstop函数的方案不行，js要先处理完filltable才处理fillstop函数
+    window.postMessage({ type: "FROM_CONTENT_SCRIPT", action: "stopFill" }, "*");
+    //window.dispatchEvent(new CustomEvent("stopFill"));
   }
 });
 

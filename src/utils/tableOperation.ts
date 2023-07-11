@@ -124,23 +124,47 @@ export const findVisibleElement = (elements: HTMLElement[]): HTMLElement | null 
   return null;
 };
 
-export const processTrRowEl = async (
+// export const processTrRowEl = async (
+//   trRowEl: Element,
+//   fields: { thName: string; tdValue: string }[],
+//   thElsIndexMap: { [key: string]: number }
+// ) => {
+//   const tdCellEls = Array.from(trRowEl.querySelectorAll("td"));
+//   //打印前3个tdCellEl
+//   console.log('前3个tdCellEl',tdCellEls[0].textContent,tdCellEls[1].textContent,tdCellEls[2].textContent)
+  
+//   for (let field of fields) {
+//     const tdCellEl = tdCellEls[thElsIndexMap[field.thName]];
+
+//     if (tdCellEl) {
+//       const editableEl = findEditableElement(tdCellEl);
+//       if (editableEl) {
+//         await simulateInput(editableEl, field.tdValue);
+//       }
+//     }
+//   }
+// };
+
+export const processTrRowEl = (
   trRowEl: Element,
   fields: { thName: string; tdValue: string }[],
   thElsIndexMap: { [key: string]: number }
 ) => {
-  const tdCellEls = Array.from(trRowEl.querySelectorAll("td"));
-  //打印前3个tdCellEl
-  console.log('前3个tdCellEl',tdCellEls[0].textContent,tdCellEls[1].textContent,tdCellEls[2].textContent)
-  
-  for (let field of fields) {
-    const tdCellEl = tdCellEls[thElsIndexMap[field.thName]];
+  return new Promise<void>(async (resolve) => {
+    const tdCellEls = Array.from(trRowEl.querySelectorAll("td"));
+    console.log('前3个tdCellEl',tdCellEls[0].textContent,tdCellEls[1].textContent,tdCellEls[2].textContent)
 
-    if (tdCellEl) {
-      const editableEl = findEditableElement(tdCellEl);
-      if (editableEl) {
-        await simulateInput(editableEl, field.tdValue);
+    for (let field of fields) {
+      const tdCellEl = tdCellEls[thElsIndexMap[field.thName]];
+
+      if (tdCellEl) {
+        const editableEl = findEditableElement(tdCellEl);
+        if (editableEl) {
+          await simulateInput(editableEl, field.tdValue);
+        }
       }
     }
-  }
+
+    resolve();
+  });
 };

@@ -23,36 +23,61 @@ const fillTable = async (
   frameId: number
 ) => {
   //打印fillTable函数全部入参
-  console.log("fllTable全部入参：", theadClass, tbodyClass, fields,frameId);
+  console.log("fllTable全部入参：", theadClass, tbodyClass, fields, frameId);
 
   let error: any = null;
   let stop = false;
-  const onStop = () => {
-    stop = true;
+
+  //能收到background的消息，无法收到popup的消息
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "stopIt") {
+      console.log("收到收到收到收到收到收到收到收到收到收到收到收到收到");
+      stop = true;
+    }
+  });
+
+  // 定义监听器函数并赋值给一个变量
+  const messageListener = function (event: MessageEvent) {
+    console.log("Listener is working!", event); // 添加这行代码
+
+    if (event.source !== window) {
+      return;
+    }
+
+    if (
+      event.data.type &&
+      event.data.type === "FROM_CONTENT_SCRIPT" &&
+      event.data.action === "stopFill"
+    ) {
+      stop = true;
+    }
   };
 
   try {
-
     //开始填充数据，发送一个消息给background，表明开始处理填充请求
     chrome.runtime.sendMessage({ action: "fillStart", frameId: frameId });
     //监听停止填充的消息
-    window.addEventListener("stopFill", onStop);
+    //window.addEventListener("stopFill", onStop);
+    window.addEventListener("message", messageListener, false);
 
     let theadEls;
     let tbodyEls;
-    
-    if (theadClass !== '') {
-      theadEls = Array.from(document.querySelectorAll<HTMLElement>(`.${theadClass}`));
+
+    if (theadClass !== "") {
+      theadEls = Array.from(
+        document.querySelectorAll<HTMLElement>(`.${theadClass}`)
+      );
     } else {
-      theadEls = Array.from(document.getElementsByTagName('thead'));
+      theadEls = Array.from(document.getElementsByTagName("thead"));
     }
-    
-    if (tbodyClass !== '') {
-      tbodyEls = Array.from(document.querySelectorAll<HTMLElement>(`.${tbodyClass}`));
+
+    if (tbodyClass !== "") {
+      tbodyEls = Array.from(
+        document.querySelectorAll<HTMLElement>(`.${tbodyClass}`)
+      );
     } else {
-      tbodyEls = Array.from(document.getElementsByTagName('tbody'));
+      tbodyEls = Array.from(document.getElementsByTagName("tbody"));
     }
-    
 
     //打印theadEls
     console.log("theadEls:", theadEls);
@@ -89,13 +114,26 @@ const fillTable = async (
     let processedRows = new Set<Node>();
     //逐行填充数据
     for (let trRowEl of trRowEls) {
-      await processTrRowEl(trRowEl, fields, thElsIndexMap);
-      //停止填充
-      if (stop) { 
+      // 返回一个新的 Promise
+      const resultPromise = new Promise(async (resolve) => {
+        // 在这个 Promise 中，我们将处理一行并检查是否已经接收到了"stop"消息
+        await processTrRowEl(trRowEl, fields, thElsIndexMap);
+        if (stop) {
+          resolve("stop");
+        } else {
+          resolve("continue");
+        }
+      });
+
+      // 等待这个 Promise 完成
+      const result = await resultPromise;
+      if (result === "stop") {
+        // 如果 Promise 返回了 'stop'，那么我们就退出这个循环
+        console.log("filltable发送fillStopped消息。frameId:", frameId);
         chrome.runtime.sendMessage({ action: "fillStopped", frameId: frameId });
-        //window.dispatchEvent(new CustomEvent("fillCompleted"));
         break;
       }
+
       processedRows.add(trRowEl);
     }
 
@@ -118,18 +156,24 @@ const fillTable = async (
               "newrow类型",
               newTrRowEl.constructor.name,
               newTrRowEl instanceof HTMLTableRowElement,
-              Object.getPrototypeOf(newTrRowEl) ===HTMLTableRowElement.prototype
+              Object.getPrototypeOf(newTrRowEl) ===
+                HTMLTableRowElement.prototype
             ); // 输出：HTMLTableRowElement
             if (newTrRowEl instanceof HTMLTableRowElement) {
               await processTrRowEl(newTrRowEl, fields, thElsIndexMap);
               //停止填充
-              if (stop) { 
+              if (stop) {
+                console.log("filltable发送fillStopped消息。frameId:", frameId);
                 observer.disconnect(); // 停止 MutationObserver 的观察
-                chrome.runtime.sendMessage({ action: "fillStopped", frameId: frameId });
+                chrome.runtime.sendMessage({
+                  action: "fillStopped",
+                  frameId: frameId,
+                });
                 //window.dispatchEvent(new CustomEvent("fillCompleted"));
                 return; // 退出 MutationObserver 的回调函数，结束所有循环
               }
               processedRows.add(newTrRowEl);
+             
             }
           }
         }
@@ -151,17 +195,19 @@ const fillTable = async (
   } catch (e) {
     error = e;
   } finally {
-    window.removeEventListener("stopFill", onStop);
+    window.removeEventListener("message", messageListener, false);
     if (error) {
       // window.dispatchEvent(
       //   new CustomEvent("fillError", { detail: error.message })
       // );
-      chrome.runtime.sendMessage({ action: "fillError",errorMessage:error.message, frameId: frameId });
-
+      chrome.runtime.sendMessage({
+        action: "fillError",
+        errorMessage: error.message,
+        frameId: frameId,
+      });
     } else if (!stop) {
       //window.dispatchEvent(new CustomEvent("fillCompleted"));
       chrome.runtime.sendMessage({ action: "fillCompleted", frameId: frameId });
-
     }
 
     //填充数据完成，发送一个消息给background，表明填充请求已处理完毕
