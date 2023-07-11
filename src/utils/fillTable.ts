@@ -10,7 +10,8 @@ declare global {
     fillTable: (
       theadClass: string,
       tbodyClass: string,
-      fields: { thName: string; tdValue: string }[]
+      fields: { thName: string; tdValue: string }[],
+      frameId: number
     ) => void;
   }
 }
@@ -18,10 +19,11 @@ declare global {
 const fillTable = async (
   theadClass: string,
   tbodyClass: string,
-  fields: { thName: string; tdValue: string }[]
+  fields: { thName: string; tdValue: string }[],
+  frameId: number
 ) => {
   //打印fillTable函数全部入参
-  console.log("fllTable全部入参：", theadClass, tbodyClass, fields);
+  console.log("fllTable全部入参：", theadClass, tbodyClass, fields,frameId);
 
   let error: any = null;
   let stop = false;
@@ -30,6 +32,10 @@ const fillTable = async (
   };
 
   try {
+
+    //开始填充数据，发送一个消息给background，表明开始处理填充请求
+    chrome.runtime.sendMessage({ action: "fillStart", frameId: frameId });
+    //监听停止填充的消息
     window.addEventListener("stopFill", onStop);
 
     let theadEls;
@@ -84,8 +90,10 @@ const fillTable = async (
     //逐行填充数据
     for (let trRowEl of trRowEls) {
       await processTrRowEl(trRowEl, fields, thElsIndexMap);
-      if (stop) {
-        window.dispatchEvent(new CustomEvent("fillCompleted"));
+      //停止填充
+      if (stop) { 
+        chrome.runtime.sendMessage({ action: "fillStopped", frameId: frameId });
+        //window.dispatchEvent(new CustomEvent("fillCompleted"));
         break;
       }
       processedRows.add(trRowEl);
@@ -114,6 +122,13 @@ const fillTable = async (
             ); // 输出：HTMLTableRowElement
             if (newTrRowEl instanceof HTMLTableRowElement) {
               await processTrRowEl(newTrRowEl, fields, thElsIndexMap);
+              //停止填充
+              if (stop) { 
+                observer.disconnect(); // 停止 MutationObserver 的观察
+                chrome.runtime.sendMessage({ action: "fillStopped", frameId: frameId });
+                //window.dispatchEvent(new CustomEvent("fillCompleted"));
+                return; // 退出 MutationObserver 的回调函数，结束所有循环
+              }
               processedRows.add(newTrRowEl);
             }
           }
@@ -138,12 +153,19 @@ const fillTable = async (
   } finally {
     window.removeEventListener("stopFill", onStop);
     if (error) {
-      window.dispatchEvent(
-        new CustomEvent("fillError", { detail: error.message })
-      );
+      // window.dispatchEvent(
+      //   new CustomEvent("fillError", { detail: error.message })
+      // );
+      chrome.runtime.sendMessage({ action: "fillError",errorMessage:error.message, frameId: frameId });
+
     } else if (!stop) {
-      window.dispatchEvent(new CustomEvent("fillCompleted"));
+      //window.dispatchEvent(new CustomEvent("fillCompleted"));
+      chrome.runtime.sendMessage({ action: "fillCompleted", frameId: frameId });
+
     }
+
+    //填充数据完成，发送一个消息给background，表明填充请求已处理完毕
+    //chrome.runtime.sendMessage({ action: "completed", frameId: frameId });
   }
 };
 

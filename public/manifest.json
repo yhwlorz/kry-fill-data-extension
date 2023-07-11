@@ -5,6 +5,7 @@
   "version": "1.5",
   "permissions": [
     "webRequest",
+    "webNavigation",
     "scripting",
     "activeTab"
   ],

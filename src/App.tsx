@@ -32,14 +32,14 @@ interface State {
   selectedOption: string;
   fields: Field[];
   filling: boolean;
-  error: string;
+  fillStaus: string;
 }
 
 const initialState: State = {
   selectedOption: Object.keys(INITIAL_OPTIONS)[0],
   fields: INITIAL_FIELDS,
   filling: false,
-  error: "",
+  fillStaus: "",
 };
 
 type Action =
@@ -48,7 +48,7 @@ type Action =
   | { type: "REMOVE_FIELD" }
   | { type: "UPDATE_FIELD"; payload: { index: number; field: Field } }
   | { type: "SET_FILLING"; payload: boolean }
-  | { type: "SET_ERROR"; payload: string };
+  | { type: "SET_FILLSTATUS"; payload: string };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -70,8 +70,8 @@ const reducer = (state: State, action: Action): State => {
       };
     case "SET_FILLING":
       return { ...state, filling: action.payload };
-    case "SET_ERROR":
-      return { ...state, error: action.payload };
+    case "SET_FILLSTATUS":
+      return { ...state, fillStaus: action.payload };
     default:
       return state;
   }
@@ -86,11 +86,31 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const messageListener = (request: { action: string; message: string }) => {
-      if (["completed", "error"].includes(request.action)) {
+      //按钮状态
+      if (
+        request.message.includes("fillCompleted") ||
+        request.message.includes("fillStopped")
+      ) {
         dispatch({ type: "SET_FILLING", payload: false });
+      } else {
+        if (["fillCompleted", "fillStopped"].includes(request.action)) {
+          dispatch({ type: "SET_FILLING", payload: false });
+        } else if (["fillStart"].includes(request.action)) {
+          dispatch({ type: "SET_FILLING", payload: true });
+        } else {
+          dispatch({ type: "SET_FILLING", payload: false });
+        }
       }
-      if (request.action === "error") {
-        dispatch({ type: "SET_ERROR", payload: request.message });
+
+      //填充状态
+      if (request.message.includes("fillCompleted")) {
+        dispatch({ type: "SET_FILLSTATUS", payload: "fillCompleted" });
+      } else if (request.message.includes("fillStopped")) {
+        dispatch({ type: "SET_FILLSTATUS", payload: "fillStopped" });
+      } else if (request.message.includes("fillStart")) {
+        dispatch({ type: "SET_FILLSTATUS", payload: "fillStart" });
+      } else {
+        dispatch({ type: "SET_FILLSTATUS", payload: request.message });
       }
     };
     chrome.runtime.onMessage.addListener(messageListener);
@@ -98,14 +118,14 @@ const App: React.FC = () => {
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        setTabId(tabs[0].id as number|null); // 保存当前标签页的ID
-        console.log("popup记录的tab:",tabs[0])
+        setTabId(tabs[0].id as number | null); // 保存当前标签页的ID
+        console.log("popup记录的tab:", tabs[0]);
       }
     });
     //这是另一种获取标签页id的方法，当上边的出问题时，可以尝试试用一下
-    if(false){
-    const port = chrome.runtime.connect();
-     setTabId(port.sender?.tab?.id ?? null); 
+    if (false) {
+      const port = chrome.runtime.connect();
+      setTabId(port.sender?.tab?.id ?? null);
     }
 
     return () => {
@@ -116,7 +136,7 @@ const App: React.FC = () => {
 
   const fillTable = () => {
     dispatch({ type: "SET_FILLING", payload: true });
-    dispatch({ type: "SET_ERROR", payload: "" });
+    dispatch({ type: "SET_FILLSTATUS", payload: "" });
 
     chrome.runtime.sendMessage({
       action: "fill",
@@ -127,7 +147,7 @@ const App: React.FC = () => {
   };
 
   const stopFill = () => {
-    chrome.runtime.sendMessage({ action: "stop" ,tabId});
+    chrome.runtime.sendMessage({ action: "stop", tabId });
   };
 
   return (
@@ -233,7 +253,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {state.error && <p className="error">{state.error}</p>}
+      {state.fillStaus && <p className="fillStatus">{state.fillStaus}</p>}
     </div>
   );
 };
