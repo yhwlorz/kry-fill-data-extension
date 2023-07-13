@@ -9,20 +9,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     (window as any).fillTable(
       request.theadClass,
       request.tbodyClass,
-      request.fields,
+      request.thtdFieldMapList,
       sender.frameId
     );
   } else if (request.action === "stop") {
+    console.log("contentscript接收到stop,打印window",window)
     //(window as any).fillStop(sender.frameId); 新增一个fillstop函数的方案不行，js要先处理完filltable才处理fillstop函数
     window.postMessage({ type: "FROM_CONTENT_SCRIPT", action: "stopFill" }, "*");
-    //window.dispatchEvent(new CustomEvent("stopFill"));
+    window.dispatchEvent(new CustomEvent("stopFill"));
   }
 });
-
-// //监听injectscript消息，将填充完成事件转发给background
-// window.addEventListener("fillCompleted", () => {
-//   chrome.runtime.sendMessage({ action: "completed" });
-// });
 
 // //监听injectscript消息，将填充错误事件转发给background
 // window.addEventListener("fillError", ((event: CustomEvent) => {
@@ -35,4 +31,3 @@ export {};
 
 //首先是内容脚本（Content Script）。内容脚本可以访问和操作网页的 DOM，但它不能直接访问页面的 JavaScript 变量和函数。同样，它也不能直接访问插件的 background 脚本，但可以通过 Chrome 的消息传递 API 和 background 脚本进行通信。
 
-//以上代码首先导入并执行了 injectScript 函数，将 findAndFill 函数注入到了页面的上下文中。然后，监听来自 background 脚本的消息。当接收到一个动作为 "fill" 的消息时，调用 findAndFill 函数。

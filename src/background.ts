@@ -1,3 +1,4 @@
+
 interface FrameStatus {
   fillingStatus:
     | "idle"
@@ -47,7 +48,7 @@ const setIframeFillingStatus = (
   };
 };
 
-//实时返回更新状态
+//获取各iframe填充状态
 const getIframeFillingStatus = (tabId: number) => {
   let rebackMessages: string[] = [];
   let frames = tabs[tabId];
@@ -64,12 +65,6 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log("The extension is installed");
 });
 
-// //记录tabId_iframeId
-// chrome.webNavigation.onCommitted.addListener((details) => {
-//   if (details.tabId !== -1) {
-//     setIframeFillingStatus(details.tabId,details.frameId,"idle",null);
-//   }
-// });
 
 //Manifest V3跨域填充脚本
 chrome.webRequest.onCompleted.addListener(
@@ -92,6 +87,8 @@ chrome.webRequest.onCompleted.addListener(
   { urls: ["<all_urls>"], types: ["main_frame", "sub_frame"] }
 );
 
+
+//中转popup与injectscript的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("background监听到消息:", request.action);
 
@@ -108,7 +105,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.log("fillResp:", response);
       sendResponse(response);
     });
-  } else if (request.action === "stopIt") {
+  } else if ( request.action === "stop") {
     chrome.tabs.sendMessage(request.tabId, request, (response) => {
       console.log("stopResp:", response);
       sendResponse(response);
@@ -147,46 +144,6 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 export {};
 
-// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-//   console.log("background接收到request：", request);
-//   if (request.action === "fill" || request.action === "stop") {
-//     chrome.tabs.query({}, (tabs) => {
-//       console.log("所有标签页信息：", tabs);
-//     });
-
-//     if (request.tabId) {
-//       chrome.tabs.sendMessage(request.tabId, request, (response) => {
-//         sendResponse(response);
-//       });
-//     }
-//   } else if (request.action === "completed" || request.action === "error") {
-//     chrome.runtime.sendMessage(request);
-//   }
-//   return true;
-// });
-
-//app.tsx中直接传递标签页id，取代从background中查询活跃标签页
-// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-//   //打印request
-//   console.log("background接收到request：",request);
-//   if (request.action === "fill" || request.action === "stop") {
-//     chrome.tabs.query({}, (tabs) => {
-//       console.log("所有标签页信息：", tabs);
-//     });
-//     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-//       console.log("活跃tab打印： ", tabs);
-//       if (tabs[0] && tabs[0].id) {
-//         chrome.tabs.sendMessage(tabs[0].id, request, (response) => {
-//           sendResponse(response);
-//         });
-//       }
-//     });
-//   } else if (request.action === "completed" || request.action === "error") {
-//     // 当收到 "completed" 或 "error" 消息时，转发给 app (popup)
-//     chrome.runtime.sendMessage(request);
-//   }
-//   return true; // 返回true，表明异步响应将会被发送
-// });
 
 // // 监听来自content script的消息
 // chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

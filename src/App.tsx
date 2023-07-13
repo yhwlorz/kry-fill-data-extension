@@ -1,21 +1,21 @@
 import React, { useReducer, useEffect, Dispatch, useState } from "react";
 import "./App.css";
 
-interface Field {
+interface thtdFieldMap {
   thName: string;
   tdValue: string;
 }
 
-interface Option {
+interface FormClass {
   theadClass: string;
   tbodyClass: string;
 }
 
-interface Options {
-  [key: string]: Option;
+interface FormSelector {
+  [key: string]: FormClass;
 }
 
-const INITIAL_OPTIONS: Options = {
+const INITIAL_FORM_SELECTOR: FormSelector = {
   通用: {
     theadClass: "scm-ant-table-thead",
     tbodyClass: "scm-ant-table-tbody",
@@ -26,45 +26,45 @@ const INITIAL_OPTIONS: Options = {
   },
 };
 
-const INITIAL_FIELDS: Field[] = [{ thName: "标准数量", tdValue: "999" }];
+const INITIAL_THTDFIELDMAP: thtdFieldMap[] = [{ thName: "标准数量", tdValue: "999" }];
 
 interface State {
-  selectedOption: string;
-  fields: Field[];
+  selectedFormName: string;
+  thtdFieldMapList: thtdFieldMap[];
   filling: boolean;
   fillStaus: string;
 }
 
 const initialState: State = {
-  selectedOption: Object.keys(INITIAL_OPTIONS)[0],
-  fields: INITIAL_FIELDS,
+  selectedFormName: Object.keys(INITIAL_FORM_SELECTOR)[0],
+  thtdFieldMapList: INITIAL_THTDFIELDMAP,
   filling: false,
   fillStaus: "",
 };
 
 type Action =
-  | { type: "SET_OPTION"; payload: string }
-  | { type: "ADD_FIELD" }
-  | { type: "REMOVE_FIELD" }
-  | { type: "UPDATE_FIELD"; payload: { index: number; field: Field } }
+  | { type: "SET_SELECTED_FORM_NAME"; payload: string }
+  | { type: "ADD_THTD_FIELDMAP" }
+  | { type: "REMOVE_THTD_FIELDMAP" }
+  | { type: "UPDATE_THTD_FIELDMAP"; payload: { index: number; field: thtdFieldMap } }
   | { type: "SET_FILLING"; payload: boolean }
   | { type: "SET_FILLSTATUS"; payload: string };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-    case "SET_OPTION":
-      return { ...state, selectedOption: action.payload };
-    case "ADD_FIELD":
+    case "SET_SELECTED_FORM_NAME":
+      return { ...state, selectedFormName: action.payload };
+    case "ADD_THTD_FIELDMAP":
       return {
         ...state,
-        fields: [...state.fields, { thName: "", tdValue: "" }],
+        thtdFieldMapList: [...state.thtdFieldMapList, { thName: "", tdValue: "" }],
       };
-    case "REMOVE_FIELD":
-      return { ...state, fields: state.fields.slice(0, -1) };
-    case "UPDATE_FIELD":
+    case "REMOVE_THTD_FIELDMAP":
+      return { ...state, thtdFieldMapList: state.thtdFieldMapList.slice(0, -1) };
+    case "UPDATE_THTD_FIELDMAP":
       return {
         ...state,
-        fields: state.fields.map((field, i) =>
+        thtdFieldMapList: state.thtdFieldMapList.map((field, i) =>
           i === action.payload.index ? action.payload.field : field
         ),
       };
@@ -82,7 +82,7 @@ const App: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   //获取用户在哪个标签页打开的插件
   const [tabId, setTabId] = useState<number | null>(null);
-  const option = INITIAL_OPTIONS[state.selectedOption];
+  const formClass = INITIAL_FORM_SELECTOR[state.selectedFormName];
 
   useEffect(() => {
     const messageListener = (request: { action: string; message: string }) => {
@@ -92,6 +92,8 @@ const App: React.FC = () => {
         request.message.includes("fillStopped")
       ) {
         dispatch({ type: "SET_FILLING", payload: false });
+      } else if (request.message.includes("fillStart")) {
+        dispatch({ type: "SET_FILLING", payload: true });
       } else {
         if (["fillCompleted", "fillStopped"].includes(request.action)) {
           dispatch({ type: "SET_FILLING", payload: false });
@@ -141,17 +143,13 @@ const App: React.FC = () => {
     chrome.runtime.sendMessage({
       action: "fill",
       tabId,
-      ...option,
-      fields: state.fields,
+      ...formClass,
+      thtdFieldMapList: state.thtdFieldMapList,
     });
   };
 
   const stopFill = () => {
-    chrome.runtime.sendMessage({ action: "stopIt", tabId });
     chrome.runtime.sendMessage({ action: "stop", tabId });
-    chrome.runtime.sendMessage({ action: "stopxx", tabId });
-
-
   };
 
   return (
@@ -162,12 +160,12 @@ const App: React.FC = () => {
         <div className="select-container">
           <label>表单：</label>
           <select
-            value={state.selectedOption}
+            value={state.selectedFormName}
             onChange={(e) =>
-              dispatch({ type: "SET_OPTION", payload: e.target.value })
+              dispatch({ type: "SET_SELECTED_FORM_NAME", payload: e.target.value })
             }
           >
-            {Object.keys(INITIAL_OPTIONS).map((option) => (
+            {Object.keys(INITIAL_FORM_SELECTOR).map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -179,20 +177,20 @@ const App: React.FC = () => {
           <input
             type="text"
             placeholder="thead class"
-            value={option.theadClass}
+            value={formClass.theadClass}
             readOnly
           />
           <label>tbody class</label>
           <input
             type="text"
             placeholder="tbody class"
-            value={option.tbodyClass}
+            value={formClass.tbodyClass}
             readOnly
           />
         </div>
       </div>
 
-      {state.fields.map((field, index) => (
+      {state.thtdFieldMapList.map((field, index) => (
         <div key={index} className="field-container">
           <input
             type="text"
@@ -200,7 +198,7 @@ const App: React.FC = () => {
             value={field.thName}
             onChange={(e) =>
               dispatch({
-                type: "UPDATE_FIELD",
+                type: "UPDATE_THTD_FIELDMAP",
                 payload: { index, field: { ...field, thName: e.target.value } },
               })
             }
@@ -211,7 +209,7 @@ const App: React.FC = () => {
             value={field.tdValue}
             onChange={(e) =>
               dispatch({
-                type: "UPDATE_FIELD",
+                type: "UPDATE_THTD_FIELDMAP",
                 payload: {
                   index,
                   field: { ...field, tdValue: e.target.value },
@@ -225,14 +223,14 @@ const App: React.FC = () => {
       <div className="button-container">
         <div className="field-button-container">
           <button
-            onClick={() => dispatch({ type: "ADD_FIELD" })}
+            onClick={() => dispatch({ type: "ADD_THTD_FIELDMAP" })}
             className="action-button add-button"
           >
             增加字段
           </button>
           <button
-            onClick={() => dispatch({ type: "REMOVE_FIELD" })}
-            disabled={state.fields.length <= 1}
+            onClick={() => dispatch({ type: "REMOVE_THTD_FIELDMAP" })}
+            disabled={state.thtdFieldMapList.length <= 1}
             className="action-button remove-button"
           >
             删除字段
