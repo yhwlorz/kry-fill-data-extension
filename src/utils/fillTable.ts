@@ -42,20 +42,20 @@ const fillTable = async (
   let error: any = null;
 
   // 定义监听器函数并赋值给一个变量
-  const messageListener = function (event: MessageEvent) {
-    console.log("Listener is working!", event);
-    if (event.source !== window) {
-      return;
-    }
+  // const messageListener = function (event: MessageEvent) {
+  //   console.log("Listener is working!", event);
+  //   if (event.source !== window) {
+  //     return;
+  //   }
 
-    if (
-      event.data.type &&
-      event.data.type === "FROM_CONTENT_SCRIPT" &&
-      event.data.action === "stopFill"
-    ) {
-      stop = true;
-    }
-  };
+  //   if (
+  //     event.data.type &&
+  //     event.data.type === "FROM_CONTENT_SCRIPT" &&
+  //     event.data.action === "stopFill"
+  //   ) {
+  //     stop = true;
+  //   }
+  // };
   //再定义一个监听器
   const chromeListener = (
     request: any,
@@ -73,8 +73,8 @@ const fillTable = async (
     chrome.runtime.sendMessage({ action: "fillStart", frameId: frameId });
 
     //开始监听停止填充的消息
-    window.addEventListener("stopFill", onStop);
-    window.addEventListener("message", messageListener, false);
+    //window.addEventListener("stopFill", onStop);
+    //window.addEventListener("message", messageListener, false);
     //能收到background的消息，无法收到popup的消息
     chrome.runtime.onMessage.addListener(chromeListener);
 
@@ -130,8 +130,8 @@ const fillTable = async (
     error = e;
   } finally {
     console.log("执行了finally");
-    window.removeEventListener("stopFill", onStop);
-    window.removeEventListener("message", messageListener, false);
+    //window.removeEventListener("stopFill", onStop);
+    //window.removeEventListener("message", messageListener, false);
     chrome.runtime.onMessage.removeListener(chromeListener);
 
     if (error) {
@@ -147,6 +147,9 @@ const fillTable = async (
       //window.dispatchEvent(new CustomEvent("fillCompleted"));
       chrome.runtime.sendMessage({ action: "fillCompleted", frameId: frameId });
     }
+
+    stop = false;
+
 
     //填充数据完成，发送一个消息给background，表明填充请求已处理完毕
     //chrome.runtime.sendMessage({ action: "completed", frameId: frameId });

@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       request.thtdFieldMapList,
       sender.frameId
     );
-  } else if (request.action === "stop") {
+  } else if (request.action === "stopIt") {
     console.log("contentscript接收到stop,打印window",window)
     //(window as any).fillStop(sender.frameId); 新增一个fillstop函数的方案不行，js要先处理完filltable才处理fillstop函数
     window.postMessage({ type: "FROM_CONTENT_SCRIPT", action: "stopFill" }, "*");
